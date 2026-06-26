@@ -71,4 +71,9 @@ app.get('/notificacoes/:usuario_id/nao-lidas', (req, res) => NotificacaoControll
 app.put('/notificacoes/:usuario_id/lidas',  (req, res) => NotificacaoController.marcarLidas(req, res));
 
 
-app.listen(3000, () => console.log('Zerion rodando em http://localhost:3000'));
+const PORT = process.env.PORT || 3000;
+
+// O app.listen só deve rodar se não estivermos no ambiente da Vercel
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => console.log(`Zerion rodando em http://localhost:${PORT}`));
+}
