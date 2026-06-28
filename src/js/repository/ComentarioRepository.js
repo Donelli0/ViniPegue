@@ -11,20 +11,21 @@ class ComentarioRepository {
     }
 
     buscarPorPost(post_id) {
-        const sql = `
-            SELECT
-                comentarios.id,
-                comentarios.conteudo,
-                comentarios.criado_em,
-                usuarios.username,
-                usuarios.foto_perfil
-            FROM comentarios
-            JOIN usuarios ON comentarios.usuario_id = usuarios.id
-            WHERE comentarios.post_id = ?
-            ORDER BY comentarios.criado_em ASC
-        `;
-        return db.promise().query(sql, [post_id]);
-    }
+    const sql = `
+        SELECT
+            comentarios.id,
+            comentarios.conteudo,
+            comentarios.criado_em,
+            comentarios.usuario_id,
+            usuarios.username,
+            usuarios.foto_perfil
+        FROM comentarios
+        JOIN usuarios ON comentarios.usuario_id = usuarios.id
+        WHERE comentarios.post_id = ?
+        ORDER BY comentarios.criado_em ASC
+    `;
+    return db.promise().query(sql, [post_id]);
+}
 
     contar(post_id) {
         const sql = 'SELECT COUNT(*) AS total FROM comentarios WHERE post_id = ?';

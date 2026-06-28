@@ -1302,7 +1302,7 @@ nav#navegacao a.ativo {
 }
 
 /* ================================================
-   DESKTOP GRANDE — 1280px+
+DESKTOP GRANDE — 1280px+
 ================================================ */
 
 @media (min-width: 1280px) {
@@ -1322,4 +1322,13 @@ nav#navegacao a.ativo {
         font-size: 0.95rem;
     }
 
+}
+
+
+.btn-like.curtido i {
+    color: #fa709a !important;
+}
+
+.btn-like.curtido span {
+    color: #fa709a !important;
 }

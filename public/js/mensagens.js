@@ -3,45 +3,46 @@
 // ================================================
 
 const usuarioLogado = JSON.parse(localStorage.getItem("usuario"));
-let destinatarioAtivo = null;
+let destinatarioAtivo    = null;
+let intervaloAtualizacao = null;
+let intervaloLista       = null;
+let ultimaMensagemId     = 0;
 
-// Elementos — acessados após DOMContentLoaded
 let elListaConversas, elTelaChat, elChatMensagens,
     elInputMensagem, elBtnEnviar, elBtnVoltar, elChatNome, elChatAvatar,
     elHeaderMensagens;
-let intervaloAtualizacao = null;
 
 document.addEventListener("DOMContentLoaded", () => {
 
-    elListaConversas = document.getElementById("lista-conversas");
-    elTelaChat       = document.getElementById("tela-chat");
-    elChatMensagens  = document.getElementById("chat-mensagens");
-    elInputMensagem  = document.getElementById("input-mensagem");
-    elBtnEnviar      = document.getElementById("btn-enviar");
-    elBtnVoltar      = document.getElementById("btn-voltar");
-    elChatNome       = document.getElementById("chat-nome-usuario");
-    elChatAvatar     = document.getElementById("chat-avatar");
+    elListaConversas  = document.getElementById("lista-conversas");
+    elTelaChat        = document.getElementById("tela-chat");
+    elChatMensagens   = document.getElementById("chat-mensagens");
+    elInputMensagem   = document.getElementById("input-mensagem");
+    elBtnEnviar       = document.getElementById("btn-enviar");
+    elBtnVoltar       = document.getElementById("btn-voltar");
+    elChatNome        = document.getElementById("chat-nome-usuario");
+    elChatAvatar      = document.getElementById("chat-avatar");
+    elHeaderMensagens = document.getElementById("header-mensagens");
 
-    // Listeners
     elBtnEnviar.addEventListener("click", enviarMensagem);
     elBtnVoltar.addEventListener("click", voltarLista);
     elInputMensagem.addEventListener("keydown", (e) => {
         if (e.key === "Enter") enviarMensagem();
     });
 
-    // Verifica se veio do perfil com ?id=
-    const params    = new URLSearchParams(window.location.search);
-    const idDireto  = params.get("id");
+    const params   = new URLSearchParams(window.location.search);
+    const idDireto = params.get("id");
 
     if (idDireto) {
         abrirChatPorId(idDireto);
     } else {
         carregarConversas();
+        iniciarAtualizacaoLista(); // polling da lista de conversas
     }
 });
 
 // ================================================
-// ABRIR CHAT DIRETO POR ID (vindo do perfil)
+// ABRIR CHAT DIRETO POR ID
 // ================================================
 
 async function abrirChatPorId(id) {
@@ -101,11 +102,39 @@ async function carregarConversas() {
 }
 
 // ================================================
+// POLLING DA LISTA — atualiza conversas a cada 5s
+// Só roda quando a lista está visível (fora do chat)
+// ================================================
+
+function iniciarAtualizacaoLista() {
+    pararAtualizacaoLista();
+    intervaloLista = setInterval(() => {
+        if (!destinatarioAtivo) carregarConversas();
+    }, 5000);
+}
+
+function pararAtualizacaoLista() {
+    if (intervaloLista) {
+        clearInterval(intervaloLista);
+        intervaloLista = null;
+    }
+}
+
+// ================================================
 // ABRIR CHAT
 // ================================================
 
 async function abrirChat(id, username, fotoPerfil) {
+    pararAtualizacaoLista(); // para o polling da lista ao entrar no chat
+    pararAtualizacaoChat();
+
     destinatarioAtivo = id;
+    ultimaMensagemId  = 0;
+
+    if (elHeaderMensagens && window.innerWidth < 1024) {
+        elHeaderMensagens.style.display = "none";
+    }
+    elTelaChat.style.top = "0";
 
     elListaConversas.style.display = "none";
     elTelaChat.style.display       = "flex";
@@ -119,30 +148,72 @@ async function abrirChat(id, username, fotoPerfil) {
         elChatAvatar.style.backgroundImage = "";
     }
 
-    await carregarMensagens();
+    await carregarMensagens(true);
     iniciarAtualizacaoChat();
     elInputMensagem.focus();
 }
 
 // ================================================
-// CARREGAR MENSAGENS
+// CARREGAR MENSAGENS — carrega tudo ao abrir o chat
 // ================================================
 
-async function carregarMensagens() {
+async function carregarMensagens(limpar = false) {
     if (!destinatarioAtivo || !usuarioLogado) return;
 
     try {
         const resposta  = await fetch(`/mensagens/${destinatarioAtivo}?meu_id=${usuarioLogado.id}`);
         const mensagens = await resposta.json();
 
-        elChatMensagens.innerHTML = "";
+        if (limpar) elChatMensagens.innerHTML = "";
+
         mensagens.forEach(m => {
-            const tipo = String(m.remetente_id) === String(usuarioLogado.id) ? "enviada" : "recebida";
-            adicionarMensagemNaTela(m.conteudo, tipo);
+            if (m.id > ultimaMensagemId) {
+                const tipo = String(m.remetente_id) === String(usuarioLogado.id) ? "enviada" : "recebida";
+                adicionarMensagemNaTela(m.conteudo, tipo);
+                ultimaMensagemId = m.id;
+            }
         });
 
     } catch (erro) {
         console.error("Erro ao carregar mensagens:", erro);
+    }
+}
+
+// ================================================
+// POLLING DO CHAT — verifica novas mensagens a cada 2s
+// ================================================
+
+function iniciarAtualizacaoChat() {
+    pararAtualizacaoChat();
+    intervaloAtualizacao = setInterval(async () => {
+        if (!destinatarioAtivo) return;
+
+        try {
+            const resposta  = await fetch(`/mensagens/${destinatarioAtivo}?meu_id=${usuarioLogado.id}`);
+            const mensagens = await resposta.json();
+
+            let temNova = false;
+            mensagens.forEach(m => {
+                if (m.id > ultimaMensagemId) {
+                    const tipo = String(m.remetente_id) === String(usuarioLogado.id) ? "enviada" : "recebida";
+                    adicionarMensagemNaTela(m.conteudo, tipo);
+                    ultimaMensagemId = m.id;
+                    temNova = true;
+                }
+            });
+
+            if (temNova) carregarConversas();
+
+        } catch (erro) {
+            // falha silenciosa
+        }
+    }, 2000);
+}
+
+function pararAtualizacaoChat() {
+    if (intervaloAtualizacao) {
+        clearInterval(intervaloAtualizacao);
+        intervaloAtualizacao = null;
     }
 }
 
@@ -153,6 +224,9 @@ async function carregarMensagens() {
 async function enviarMensagem() {
     const texto = elInputMensagem.value.trim();
     if (texto === "" || !destinatarioAtivo || !usuarioLogado) return;
+
+    elInputMensagem.value = "";
+    elInputMensagem.focus();
 
     try {
         const resposta = await fetch("/mensagens", {
@@ -165,24 +239,23 @@ async function enviarMensagem() {
             })
         });
 
-        if (!resposta.ok) {
-            throw new Error('Falha ao enviar mensagem');
-        }
+        if (!resposta.ok) throw new Error('Falha ao enviar mensagem');
+
+        const dados = await resposta.json();
+        if (dados?.id) ultimaMensagemId = dados.id;
 
         adicionarMensagemNaTela(texto, "enviada");
-        elInputMensagem.value = "";
-        elInputMensagem.focus();
         carregarConversas();
 
     } catch (erro) {
         console.error("Erro ao enviar:", erro);
+        elInputMensagem.value = texto;
     }
 }
 
 // ================================================
 // RENDERIZAR MENSAGEM
 // ================================================
-// Função para adicionar mensagem na tela
 
 function adicionarMensagemNaTela(texto, tipo) {
     const item = document.createElement("li");
@@ -195,15 +268,14 @@ function adicionarMensagemNaTela(texto, tipo) {
 // ================================================
 // VOLTAR
 // ================================================
-// Função para voltar lista
 
 function voltarLista() {
-    destinatarioAtivo = null;
     pararAtualizacaoChat();
+    destinatarioAtivo = null;
+    ultimaMensagemId  = 0;
 
-    // Mostra o header mobile ao sair do chat
     if (elHeaderMensagens && window.innerWidth < 1024) {
-    elHeaderMensagens.style.display = "flex";
+        elHeaderMensagens.style.display = "flex";
     }
     elTelaChat.style.top = "55px";
 
@@ -211,12 +283,12 @@ function voltarLista() {
     elListaConversas.style.display = "block";
     history.replaceState(null, "", "mensagens.html");
     carregarConversas();
+    iniciarAtualizacaoLista(); // reinicia polling da lista ao voltar
 }
 
 // ================================================
 // FORMATAR TEMPO
 // ================================================
-// Função para formatar tempo
 
 function formatarTempo(data) {
     const diff = Math.floor((new Date() - new Date(data)) / 60000);
@@ -226,19 +298,7 @@ function formatarTempo(data) {
     return `${Math.floor(diff / 1440)}d`;
 }
 
-function iniciarAtualizacaoChat() {
+window.addEventListener("beforeunload", () => {
     pararAtualizacaoChat();
-    intervaloAtualizacao = setInterval(async () => {
-        if (destinatarioAtivo) await carregarMensagens();
-        carregarConversas();
-    }, 5000);
-}
-
-function pararAtualizacaoChat() {
-    if (intervaloAtualizacao) {
-        clearInterval(intervaloAtualizacao);
-        intervaloAtualizacao = null;
-    }
-}
-
-window.addEventListener("beforeunload", pararAtualizacaoChat);
+    pararAtualizacaoLista();
+});

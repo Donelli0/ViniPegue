@@ -1,15 +1,10 @@
 // ================================================
-// ZERION — UsuarioController.js
-// Controller para rotas de usuario.
+// ZERION — UsuarioController.js — FIX email duplicado
 // ================================================
 
 const UsuarioService = require('../service/UsuarioService');
 
-// Classe que gerencia usuario controller
-
 class UsuarioController {
-
-    // Executa a ação de cadastrar
 
     async cadastrar(req, res) {
         try {
@@ -18,11 +13,21 @@ class UsuarioController {
             res.json({ msg: 'Cadastrado com sucesso' });
         } catch (error) {
             console.error(error);
+
+            // FIX — trata email/username duplicado especificamente
+            if (error.code === 'ER_DUP_ENTRY') {
+                if (error.sqlMessage?.includes('email')) {
+                    return res.status(409).json({ msg: 'Este e-mail já está cadastrado.' });
+                }
+                if (error.sqlMessage?.includes('username')) {
+                    return res.status(409).json({ msg: 'Este nome de usuário já está em uso.' });
+                }
+                return res.status(409).json({ msg: 'Dados já cadastrados.' });
+            }
+
             res.status(500).json({ msg: 'Erro ao cadastrar' });
         }
     }
-
-    // Executa a ação de login
 
     async login(req, res) {
         try {
@@ -36,8 +41,6 @@ class UsuarioController {
         }
     }
 
-    // Executa a ação de buscar
-
     async buscar(req, res) {
         try {
             const { termo } = req.query;
@@ -48,8 +51,6 @@ class UsuarioController {
             res.status(500).json({ msg: 'Erro na busca' });
         }
     }
-
-    // Executa a ação de buscar por id
 
     async buscarPorId(req, res) {
         try {
@@ -62,8 +63,6 @@ class UsuarioController {
             res.status(500).json({ msg: 'Erro ao buscar usuário' });
         }
     }
-
-    // Executa a ação de atualizar foto
 
     async atualizarFoto(req, res) {
         try {

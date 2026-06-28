@@ -109,6 +109,7 @@ async function carregarSugestoes() {
 
         usuarios
             .filter(u => !usuarioLogado || String(u.id) !== String(usuarioLogado.id))
+            .sort(() => Math.random() - 0.5)
             .slice(0, 6)
             .forEach(u => renderizarUsuario(u, lista));
 

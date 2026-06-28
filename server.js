@@ -1,6 +1,5 @@
 // ================================================
 // ZERION — server.js
-// Servidor Express que expõe a API e serve arquivos estáticos.
 // ================================================
 
 require('dotenv').config();
@@ -23,11 +22,8 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
-
-// Garante que o Express ache a pasta public, independente de onde a Vercel rode o código
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Rota explícita para a página inicial
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -44,8 +40,8 @@ app.post('/posts',                  (req, res) => PostController.criar(req, res)
 app.delete('/posts/:id',            (req, res) => PostController.deletar(req, res));
 app.get('/posts',                   (req, res) => PostController.listar(req, res));
 app.get('/posts/usuario/:id',       (req, res) => PostController.listarPorUsuario(req, res));
-app.get('/posts/curtidos/:id',              (req, res) => PostController.listarCurtidos(req, res));  
-app.get('/posts/comentados/:id',            (req, res) => PostController.listarComentados(req, res));
+app.get('/posts/curtidos/:id',      (req, res) => PostController.listarCurtidos(req, res));
+app.get('/posts/comentados/:id',    (req, res) => PostController.listarComentados(req, res));
 
 // LIKES
 app.post('/likes',                  (req, res) => LikeController.curtir(req, res));
@@ -60,29 +56,26 @@ app.get('/comentarios/:post_id',    (req, res) => ComentarioController.listar(re
 app.post('/reposts',                (req, res) => RepostController.repostar(req, res));
 app.delete('/reposts',              (req, res) => RepostController.desfazer(req, res));
 
-// SEGUIDORES
-app.get('/seguidores/checar',       (req, res) => SeguidorController.checar(req, res));
-app.get('/seguidores/:id',          (req, res) => SeguidorController.contar(req, res));
-app.post('/seguidores',             (req, res) => SeguidorController.seguir(req, res));
-app.delete('/seguidores',           (req, res) => SeguidorController.desseguir(req, res));
+// SEGUIDORES — ordem importa: específicas antes de /:id
+app.get('/seguidores/checar',           (req, res) => SeguidorController.checar(req, res));
+app.get('/seguidores/:id/seguidores',   (req, res) => SeguidorController.listarSeguidores(req, res));
+app.get('/seguidores/:id/seguindo',     (req, res) => SeguidorController.listarSeguindo(req, res));
+app.get('/seguidores/:id',              (req, res) => SeguidorController.contar(req, res));
+app.post('/seguidores',                 (req, res) => SeguidorController.seguir(req, res));
+app.delete('/seguidores',               (req, res) => SeguidorController.desseguir(req, res));
 
 // MENSAGENS
 app.get('/mensagens/conversas/:id', (req, res) => MensagemController.listarConversas(req, res));
 app.post('/mensagens',              (req, res) => MensagemController.enviar(req, res));
 app.get('/mensagens/:id',           (req, res) => MensagemController.conversa(req, res));
 
-
-// Notificações
-app.get('/notificacoes/:usuario_id',        (req, res) => NotificacaoController.listar(req, res));
-app.get('/notificacoes/:usuario_id/nao-lidas', (req, res) => NotificacaoController.contarNaoLidas(req, res));
-app.put('/notificacoes/:usuario_id/lidas',  (req, res) => NotificacaoController.marcarLidas(req, res));
-
+// NOTIFICAÇÕES
+app.get('/notificacoes/:usuario_id',            (req, res) => NotificacaoController.listar(req, res));
+app.get('/notificacoes/:usuario_id/nao-lidas',  (req, res) => NotificacaoController.contarNaoLidas(req, res));
+app.put('/notificacoes/:usuario_id/lidas',      (req, res) => NotificacaoController.marcarLidas(req, res));
 
 const PORT = process.env.PORT || 3000;
 
-// O app.listen só deve rodar se não estivermos no ambiente da Vercel
-if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, () => console.log(`Zerion rodando em http://localhost:${PORT}`));
-}
+app.listen(PORT, () => console.log(`Zerion rodando em http://localhost:${PORT}`));
 
 module.exports = app;
