@@ -80,7 +80,7 @@ app.put('/notificacoes/:usuario_id/lidas',  (req, res) => NotificacaoController.
 
 const PORT = process.env.PORT || 3000;
 
-// O app.listen só deve rodar se não estivermos no ambiente da Vercel
+// O app.listen só deve rodar se não estivermos na Vercel
 if (process.env.NODE_ENV !== 'production') {
     app.listen(PORT, () => console.log(`Zerion rodando em http://localhost:${PORT}`));
 }
