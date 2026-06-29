@@ -1,7 +1,3 @@
-// ================================================
-// ZERION — javascript.js (feed)
-// ================================================
-
 const botaoPostar   = document.getElementById("btn-postar");
 const botaoAnexar   = document.getElementById("btn-anexar");
 const textarea      = document.getElementById("itexto");
@@ -12,7 +8,6 @@ const previewImagem = document.getElementById("preview-imagem");
 const usuarioLogado = JSON.parse(localStorage.getItem("usuario"));
 let imagemSelecionada = "";
 
-// Avatar do criar post — com fallback ícone
 const avatarCriar = document.querySelector(".Avatar");
 if (avatarCriar) {
     if (usuarioLogado?.foto_perfil) {
@@ -24,11 +19,6 @@ if (avatarCriar) {
         avatarCriar.innerHTML = `<i class="fa-solid fa-user-astronaut"></i>`;
     }
 }
-
-// ================================================
-// TIMESTAMP RELATIVO
-// ================================================
-// Função para tempo relativo
 
 function tempoRelativo(dataStr) {
     const agora = new Date();
@@ -44,19 +34,10 @@ function tempoRelativo(dataStr) {
     return data.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
 }
 
-// ================================================
-// BADGE VERIFICADO
-// ================================================
-// Função para badge verificado
-
 function badgeVerificado(verificado) {
     if (!verificado) return "";
     return `<i class="fa-solid fa-circle-check badge-verificado" title="Verificado"></i>`;
 }
-
-// ================================================
-// ANEXAR IMAGEM
-// ================================================
 
 botaoAnexar.addEventListener("click", () => inputImagem.click());
 
@@ -70,10 +51,6 @@ inputImagem.addEventListener("change", () => {
     };
     leitor.readAsDataURL(arquivo);
 });
-
-// ================================================
-// POSTAR — com feedback de loading
-// ================================================
 
 botaoPostar.addEventListener("click", async () => {
     if (textarea.value.trim() === "" && imagemSelecionada === "") return;
@@ -109,10 +86,6 @@ botaoPostar.addEventListener("click", async () => {
     }
 });
 
-// ================================================
-// CARREGAR POSTS
-// ================================================
-
 async function carregarPosts() {
     try {
         const viewerId = usuarioLogado?.id || 0;
@@ -137,12 +110,7 @@ async function carregarPosts() {
     }
 }
 
-// ================================================
-// RENDERIZAR POST
-// ================================================
-
 let _postCardIndex = 0;
-// Função para renderizar post
 
 function renderizarPost(post) {
     const cardId = `card-${++_postCardIndex}`;
@@ -188,7 +156,7 @@ function renderizarPost(post) {
     item.innerHTML = `
         ${labelRepost}
         ${menuHtml}
-        <div class="post-avatar" data-uid="${post.usuario_id}" style="${avatarStyle}">${avatarIcon}</div>
+        <div class="post-avatar link-perfil" data-uid="${post.usuario_id}" style="${avatarStyle}">${avatarIcon}</div>
         <div class="post-topo">
             <h3 class="post-usuario link-perfil" data-uid="${post.usuario_id}">
                 ${username} ${badge}
@@ -200,7 +168,7 @@ function renderizarPost(post) {
 
         <div class="post-acoes">
             <button class="icone-btn btn-like ${jaCurtiu ? 'curtido' : ''}" data-id="${post.id}" title="Curtir">
-                <i class="${jaCurtiu ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                <i class="fa-regular fa-heart"></i>
                 <span class="contagem-likes-txt">${post.total_likes || 0}</span>
             </button>
             <button class="icone-btn btn-comentar" data-id="${post.id}" data-card="${cardId}" title="Comentar">
@@ -233,15 +201,8 @@ function renderizarPost(post) {
         ca.innerHTML = "";
     }
 
-    const btnLikeEl   = item.querySelector(".btn-like");
-    const btnRepostEl = item.querySelector(".btn-repost");
-
-    if (jaCurtiu) {
-        btnLikeEl.querySelector("i").style.color                   = "#fa709a";
-        btnLikeEl.querySelector(".contagem-likes-txt").style.color = "#fa709a";
-    }
-
     if (jaRepostou) {
+        const btnRepostEl = item.querySelector(".btn-repost");
         btnRepostEl.querySelector("i").style.color                     = "var(--neon-ciano)";
         btnRepostEl.querySelector(".contagem-reposts-txt").style.color = "var(--neon-ciano)";
     }
@@ -281,10 +242,6 @@ function renderizarPost(post) {
     publicacoes.appendChild(item);
 }
 
-// ================================================
-// DELETAR POST
-// ================================================
-
 async function deletarPost(post_id, itemEl) {
     if (!confirm("Excluir esta transmissão?")) return;
 
@@ -306,15 +263,10 @@ async function deletarPost(post_id, itemEl) {
     }
 }
 
-// ================================================
-// CURTIR / DESCURTIR
-// ================================================
-
 async function toggleLike(e) {
     if (!usuarioLogado) return;
     const btn      = e.currentTarget;
     const post_id  = btn.dataset.id;
-    const icon     = btn.querySelector("i, svg");
     const span     = btn.querySelector(".contagem-likes-txt");
     const jaCurtiu = btn.classList.contains("curtido");
 
@@ -325,38 +277,21 @@ async function toggleLike(e) {
             body: JSON.stringify({ post_id, usuario_id: usuarioLogado.id })
         });
 
-        if (!resposta.ok) {
-            throw new Error('Falha ao atualizar like');
-        }
+        if (!resposta.ok) throw new Error('Falha ao atualizar like');
 
         const { total } = await resposta.json();
         if (span) span.textContent = total;
 
         if (jaCurtiu) {
             btn.classList.remove("curtido");
-            if (icon) {
-                icon.className = "fa-regular fa-heart";
-                icon.style.setProperty("color", "", "important");
-                icon.style.setProperty("fill", "", "important");
-            }
-            if (span) span.style.setProperty("color", "", "important");
         } else {
             btn.classList.add("curtido");
-            if (icon) {
-                icon.className = "fa-solid fa-heart";
-                icon.style.setProperty("color", "#fa709a", "important");
-                icon.style.setProperty("fill", "#fa709a", "important");
-            }
-            if (span) span.style.setProperty("color", "#fa709a", "important");
         }
+
     } catch (erro) {
         console.error("Erro ao curtir:", erro);
     }
 }
-
-// ================================================
-// COMENTÁRIOS
-// ================================================
 
 async function toggleComentarios(e) {
     const btn      = e.currentTarget;
@@ -405,12 +340,19 @@ async function carregarComentarios(post_id, secao) {
             const item = document.createElement("li");
             item.classList.add("comentario-item");
             item.innerHTML = `
-                <div class="comentario-avatar-mini" style="${avatarStyle}">${avatarIcon}</div>
+                <div class="comentario-avatar-mini link-perfil" data-uid="${c.usuario_id}" style="${avatarStyle}">${avatarIcon}</div>
                 <div class="comentario-corpo">
-                    <span class="comentario-usuario">${username}</span>
+                    <span class="comentario-usuario link-perfil" data-uid="${c.usuario_id}" style="cursor:pointer;">${username}</span>
                     <span class="comentario-texto">${c.conteudo}</span>
                 </div>
             `;
+
+            item.querySelectorAll(".link-perfil").forEach(el => {
+                el.addEventListener("click", () => {
+                    window.location.href = `perfil.html?id=${el.dataset.uid}`;
+                });
+            });
+
             lista.appendChild(item);
         });
     } catch (erro) { console.error("Erro ao carregar comentários:", erro); }
@@ -454,15 +396,11 @@ async function enviarComentario(post_id, input, postCard) {
     } catch (erro) { console.error("Erro ao comentar:", erro); }
 }
 
-// ================================================
-// REPOST
-// ================================================
-
 async function toggleRepost(e) {
     if (!usuarioLogado) return;
     const btn        = e.currentTarget;
     const post_id    = btn.dataset.id;
-    const icon       = btn.querySelector("i, svg");
+    const icon       = btn.querySelector("i");
     const span       = btn.querySelector(".contagem-reposts-txt");
     const jaRepostou = btn.classList.contains("repostado");
 
@@ -473,41 +411,23 @@ async function toggleRepost(e) {
             body: JSON.stringify({ post_id, usuario_id: usuarioLogado.id })
         });
 
-        if (!resposta.ok) {
-            throw new Error('Falha ao atualizar repost');
-        }
+        if (!resposta.ok) throw new Error('Falha ao atualizar repost');
 
         const { total } = await resposta.json();
         if (span) span.textContent = total;
 
         if (jaRepostou) {
             btn.classList.remove("repostado");
-            if (icon) {
-                if (icon.tagName.toLowerCase() === "i") {
-                    icon.className = "fa-solid fa-retweet";
-                }
-                icon.style.setProperty("color", "", "important");
-                icon.style.setProperty("fill", "", "important");
-            }
-            if (span) span.style.setProperty("color", "", "important");
+            if (icon) icon.style.color = "";
+            if (span) span.style.color = "";
         } else {
             btn.classList.add("repostado");
-            if (icon) {
-                if (icon.tagName.toLowerCase() === "i") {
-                    icon.className = "fa-solid fa-retweet";
-                }
-                icon.style.setProperty("color", "var(--neon-ciano)", "important");
-                icon.style.setProperty("fill", "var(--neon-ciano)", "important");
-            }
-            if (span) span.style.setProperty("color", "var(--neon-ciano)", "important");
+            if (icon) icon.style.color = "var(--neon-ciano)";
+            if (span) span.style.color = "var(--neon-ciano)";
         }
     } catch (erro) {
         console.error("Erro ao repostar:", erro);
     }
 }
-
-// ================================================
-// INICIA
-// ================================================
 
 carregarPosts();

@@ -32,10 +32,6 @@ button:focus, button:focus-visible,
 button { transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease; }
 button:active, .icone-btn:active { transform: scale(0.94); }
 
-/* ================================================
-   BASE — background gradiente limpo
-================================================ */
-
 html {
     width: 100%; min-height: 100vh; overflow-x: hidden;
     background: radial-gradient(ellipse at 20% 0%, #0d1f3c 0%, #050d1a 60%, #000508 100%);
@@ -52,19 +48,11 @@ body::-webkit-scrollbar { display: none; }
 
 main { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
 
-/* ================================================
-   COVER
-================================================ */
-
 .perfil-cover {
     width: 100%; height: 120px;
     background: linear-gradient(135deg, var(--cor3), var(--cor1), var(--cor2));
     position: relative; flex-shrink: 0;
 }
-
-/* ================================================
-   PERFIL HEADER
-================================================ */
 
 .perfil-header {
     width: 100%;
@@ -82,7 +70,6 @@ main { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
     border: 3px solid rgb(5, 13, 26);
     box-shadow: 0 0 0 2px var(--cor1), 0 4px 20px rgba(0,0,0,0.5);
     cursor: pointer; transition: box-shadow 0.3s ease;
-    /* Fallback — ícone centralizado */
     display: flex; align-items: center; justify-content: center;
     font-size: 2rem; color: rgba(255,255,255,0.25);
 }
@@ -92,7 +79,7 @@ main { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
 .SemNada { border: none; background: transparent; padding: 0; cursor: pointer; display: block; }
 
 .perfil-cover {
-    position: relative; /* já tem, só confirma */
+    position: relative;
 }
 
 #btn-voltar-perfil {
@@ -124,10 +111,6 @@ main { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
     transform: none;
     box-shadow: none;
 }
-
-/* ================================================
-   AÇÕES
-================================================ */
 
 .acoes-perfil {
     position: absolute; top: 1rem; right: 1.25rem;
@@ -162,10 +145,6 @@ main { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
     color: rgb(5,13,26); transform: translateY(-1px); filter: none;
 }
 
-/* ================================================
-   INFOS
-================================================ */
-
 .UsuarioInfos { width: 100%; }
 .DataUsuario { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-bottom: 0.75rem; }
 #username-perfil { color: white; font-size: 1rem; line-height: 1.3; }
@@ -181,10 +160,6 @@ main { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
 
 .FFP > div:hover { color: white; }
 .FFP > div span.numero { font-size: 1rem; color: white; }
-
-/* ================================================
-   NAV TABS
-================================================ */
 
 .NavPerfil {
     width: 100%; background-color: rgba(5,13,26,0.95);
@@ -404,12 +379,8 @@ main { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
 }
 
 .input-comentario {
-    min-width: 0; /* essencial — sem isso o flex item não encolhe */
+    min-width: 0;
 }
-
-/* ================================================
-   FOOTER
-================================================ */
 
 footer {
     position: fixed; background-color: rgba(5,13,26,0.96);
@@ -435,9 +406,197 @@ nav#navegacao a { font-size: 1.2rem; text-decoration: none; color: var(--txt-poe
     filter: drop-shadow(0 0 4px rgba(0, 242, 254, 0.5));
 }
 
-/* ================================================
-   TABLET
-================================================ */
+.lista-comentarios {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 240px;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.comentario-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.comentario-corpo {
+    background-color: rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    padding: 6px 10px;
+    flex: 1;
+}
+
+.comentario-usuario {
+    display: block;
+    color: var(--neon-ciano);
+    font-size: 0.72rem;
+    margin-bottom: 3px;
+}
+
+.comentario-texto {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.8rem;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.comentario-avatar-mini {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: rgba(55, 82, 166, 0.5);
+    flex-shrink: 0;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+#modal-seguidores {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+}
+
+.modal-overlay {
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.modal-box {
+    background-color: rgba(5, 13, 26, 0.98);
+    border: 1px solid var(--borda);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--borda);
+    flex-shrink: 0;
+}
+
+.modal-titulo {
+    color: white;
+    font-size: 0.9rem;
+}
+
+.modal-fechar {
+    background: transparent;
+    border: none;
+    color: var(--txt-poeira);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: background 0.2s, color 0.2s;
+    margin: 0;
+    padding: 0;
+}
+
+.modal-fechar:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+    transform: none;
+    box-shadow: none;
+}
+
+.modal-lista {
+    list-style: none;
+    overflow-y: auto;
+    flex: 1;
+    padding: 0.5rem 0;
+    scrollbar-width: none;
+}
+
+.modal-lista::-webkit-scrollbar {
+    display: none;
+}
+
+.modal-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    transition: background 0.2s;
+    cursor: pointer;
+}
+
+.modal-item:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+.modal-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background-color: rgba(55, 82, 166, 0.5);
+    flex-shrink: 0;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.modal-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+}
+
+.modal-nome {
+    color: white;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.modal-sub {
+    color: var(--txt-poeira);
+    font-size: 0.7rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.modal-loading,
+.modal-vazio {
+    padding: 2rem;
+    text-align: center;
+    color: var(--txt-poeira);
+    font-size: 0.8rem;
+}
 
 @media (min-width: 768px) and (max-width: 1023px) {
     body { padding-bottom: 70px; }
@@ -452,10 +611,6 @@ nav#navegacao a { font-size: 1.2rem; text-decoration: none; color: var(--txt-poe
     .NavPerfil { top: 0; }
     .sidebar-perfil { display: none; }
 }
-
-/* ================================================
-   DESKTOP
-================================================ */
 
 @media (min-width: 1024px) {
     body { padding-bottom: 0; display: flex; justify-content: center; }

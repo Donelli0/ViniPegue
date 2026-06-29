@@ -1,7 +1,3 @@
-// ================================================
-// ZERION — perfil.js
-// ================================================
-
 const usuarioLogado = JSON.parse(localStorage.getItem("usuario"));
 const params        = new URLSearchParams(window.location.search);
 const perfilId      = params.get("id") || usuarioLogado?.id;
@@ -15,12 +11,7 @@ const btnMensagem = document.getElementById("btnMensagem");
 const listaPosts  = document.getElementById("lista-posts");
 
 let _perfilCardIndex = 0;
-let abaAtiva = "posts"; // controla qual aba está ativa
-
-// ================================================
-// TIMESTAMP RELATIVO
-// ================================================
-// Função para tempo relativo
+let abaAtiva = "posts";
 
 function tempoRelativo(dataStr) {
     const agora = new Date();
@@ -35,16 +26,10 @@ function tempoRelativo(dataStr) {
     return data.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
 }
 
-// ================================================
-// BADGE VERIFICADO
-// ================================================
-// Função para badge verificado
-
 function badgeVerificado(verificado) {
     if (!verificado) return "";
     return `<i class="fa-solid fa-circle-check badge-verificado" title="Verificado"></i>`;
 }
-// Função para set contador
 
 function setContador(id, numero) {
     const el = document.getElementById(id);
@@ -53,19 +38,11 @@ function setContador(id, numero) {
     if (span) span.textContent = numero;
 }
 
-// ================================================
-// BOTÃO VOLTAR
-// ================================================
-
 const btnVoltar = document.getElementById("btn-voltar-perfil");
 if (btnVoltar) {
     btnVoltar.style.display = "flex";
     btnVoltar.addEventListener("click", () => history.back());
 }
-
-// ================================================
-// CARREGAR PERFIL
-// ================================================
 
 async function carregarPerfil() {
     try {
@@ -106,13 +83,20 @@ async function carregarPerfil() {
         const sidebarContagem = document.getElementById("sidebar-contagem");
         if (sidebarContagem) sidebarContagem.textContent = `${contagem.seguidores} seguidores · ${contagem.seguindo} seguindo`;
 
+        document.getElementById("contagem-seguidores")?.addEventListener("click", () => abrirModalSeguidores("seguidores"));
+        document.getElementById("contagem-seguindo")?.addEventListener("click",   () => abrirModalSeguidores("seguindo"));
+
         if (ehMeuPerfil) {
             btnSeguir.style.display     = "none";
             btnMensagem.style.display   = "none";
             btnFoto.style.cursor        = "pointer";
         } else {
+            if (usuario.is_ia) {
+                btnMensagem.style.display = "none";
+            } else {
+                btnMensagem.style.display = "inline-flex";
+            }
             btnSeguir.style.display     = "inline-flex";
-            btnMensagem.style.display   = "inline-flex";
             btnFoto.style.pointerEvents = "none";
             btnFoto.style.cursor        = "default";
 
@@ -133,9 +117,70 @@ async function carregarPerfil() {
     }
 }
 
-// ================================================
-// TABS — controle central
-// ================================================
+async function abrirModalSeguidores(tipo) {
+    document.getElementById("modal-seguidores")?.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "modal-seguidores";
+    modal.innerHTML = `
+        <div class="modal-overlay" id="modal-overlay">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <span class="modal-titulo">${tipo === "seguidores" ? "Seguidores" : "Seguindo"}</span>
+                    <button class="modal-fechar" id="modal-fechar"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <ul class="modal-lista" id="modal-lista">
+                    <li class="modal-loading">Carregando...</li>
+                </ul>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    document.getElementById("modal-fechar").addEventListener("click", () => modal.remove());
+    document.getElementById("modal-overlay").addEventListener("click", (e) => {
+        if (e.target.id === "modal-overlay") modal.remove();
+    });
+
+    try {
+        const res      = await fetch(`/seguidores/${perfilId}/${tipo}`);
+        const usuarios = await res.json();
+        const lista    = document.getElementById("modal-lista");
+        lista.innerHTML = "";
+
+        if (usuarios.length === 0) {
+            lista.innerHTML = `<li class="modal-vazio">Nenhum usuário ainda.</li>`;
+            return;
+        }
+
+        usuarios.forEach(u => {
+            const username    = u.username.startsWith("@") ? u.username : `@${u.username}`;
+            const avatarStyle = u.foto_perfil
+                ? `background-image:url(${u.foto_perfil});background-size:cover;background-position:center;`
+                : "";
+            const avatarIcon = u.foto_perfil ? "" : `<i class="fa-solid fa-user-astronaut"></i>`;
+            const badge      = u.verificado ? `<i class="fa-solid fa-circle-check badge-verificado"></i>` : "";
+
+            const item = document.createElement("li");
+            item.classList.add("modal-item");
+            item.style.cursor = "pointer";
+            item.innerHTML = `
+                <div class="modal-avatar" style="${avatarStyle}">${avatarIcon}</div>
+                <div class="modal-info">
+                    <span class="modal-nome">${username} ${badge}</span>
+                    <span class="modal-sub">${u.nome || ""}</span>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color:var(--txt-poeira);font-size:0.75rem;"></i>
+            `;
+            item.addEventListener("click", () => {
+                window.location.href = `perfil.html?id=${u.id}`;
+            });
+            lista.appendChild(item);
+        });
+    } catch (erro) {
+        console.error("Erro ao carregar lista:", erro);
+    }
+}
 
 document.querySelectorAll(".tab-btn").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -150,7 +195,6 @@ async function carregarAba(tab) {
     listaPosts.innerHTML = "";
     _perfilCardIndex = 0;
 
-    // Mostra loading
     listaPosts.innerHTML = `
         <li style="width:100%;text-align:center;padding:2rem;color:var(--txt-poeira);font-size:0.8rem;">
             <i class="fa-solid fa-circle-notch fa-spin" style="margin-bottom:0.5rem;display:block;font-size:1.5rem;color:var(--neon-ciano);opacity:0.5;"></i>
@@ -161,10 +205,6 @@ async function carregarAba(tab) {
     if (tab === "comentarios") await carregarComentados();
     if (tab === "likes")       await carregarLikes();
 }
-
-// ================================================
-// ABA POSTS
-// ================================================
 
 async function carregarPosts() {
     try {
@@ -186,16 +226,11 @@ async function carregarPosts() {
         }
 
         posts.forEach(p => renderizarPost(p, "posts"));
-
     } catch (erro) {
         console.error("Erro ao carregar posts:", erro);
         mostrarErroAba();
     }
 }
-
-// ================================================
-// ABA LIKES
-// ================================================
 
 async function carregarLikes() {
     try {
@@ -216,16 +251,11 @@ async function carregarLikes() {
         }
 
         posts.forEach(p => renderizarPost(p, "likes"));
-
     } catch (erro) {
         console.error("Erro ao carregar likes:", erro);
         mostrarErroAba();
     }
 }
-
-// ================================================
-// ABA COMENTÁRIOS
-// ================================================
 
 async function carregarComentados() {
     try {
@@ -246,13 +276,11 @@ async function carregarComentados() {
         }
 
         posts.forEach(p => renderizarPost(p, "comentarios"));
-
     } catch (erro) {
         console.error("Erro ao carregar comentários:", erro);
         mostrarErroAba();
     }
 }
-// Função para mostrar erro aba
 
 function mostrarErroAba() {
     listaPosts.innerHTML = `
@@ -261,11 +289,6 @@ function mostrarErroAba() {
             <p>Erro ao carregar. Tente novamente.</p>
         </li>`;
 }
-
-// ================================================
-// RENDERIZAR POST (compartilhado pelas 3 abas)
-// ================================================
-// Função para renderizar post
 
 function renderizarPost(post, origem) {
     const cardId = `perfil-card-${++_perfilCardIndex}`;
@@ -289,7 +312,6 @@ function renderizarPost(post, origem) {
            </div>`
         : "";
 
-    // Badge visual indicando a origem da aba (likes e comentários)
     let labelOrigem = "";
     if (origem === "likes") {
         labelOrigem = `
@@ -328,7 +350,7 @@ function renderizarPost(post, origem) {
         ${labelOrigem}
         ${labelRepost}
         ${menuHtml}
-        <div class="post-avatar" data-uid="${post.usuario_id}" style="${avatarStyle}">${avatarIcon}</div>
+        <div class="post-avatar link-perfil" data-uid="${post.usuario_id}" style="${avatarStyle}">${avatarIcon}</div>
         <div class="post-topo">
             <h3 class="post-usuario link-perfil" data-uid="${post.usuario_id}">
                 ${username} ${badge}
@@ -375,16 +397,18 @@ function renderizarPost(post, origem) {
     const btnRepostEl = item.querySelector(".btn-repost");
 
     if (jaCurtiu) {
-        btnLikeEl.querySelector("i").style.color                   = "#fa709a";
-        btnLikeEl.querySelector(".contagem-likes-txt").style.color = "#fa709a";
+        btnLikeEl.classList.add("curtido");
+        btnLikeEl.querySelector("i").className   = "fa-solid fa-heart";
+        btnLikeEl.querySelector("i").style.setProperty("color", "#fa709a", "important");
+        btnLikeEl.querySelector(".contagem-likes-txt").style.setProperty("color", "#fa709a", "important");
     }
     if (jaRepostou) {
-        btnRepostEl.querySelector("i").style.color                     = "var(--neon-ciano)";
-        btnRepostEl.querySelector(".contagem-reposts-txt").style.color = "var(--neon-ciano)";
+        btnRepostEl.classList.add("repostado");
+        btnRepostEl.querySelector("i").style.setProperty("color", "var(--neon-ciano)", "important");
+        btnRepostEl.querySelector(".contagem-reposts-txt").style.setProperty("color", "var(--neon-ciano)", "important");
     }
 
-    // Link para perfil ao clicar no avatar/username (de outros usuários nos posts das abas likes/comentarios)
-    item.querySelectorAll(".post-avatar[data-uid], .link-perfil[data-uid]").forEach(el => {
+    item.querySelectorAll(".link-perfil").forEach(el => {
         el.style.cursor = "pointer";
         el.addEventListener("click", () => {
             window.location.href = `perfil.html?id=${el.dataset.uid}`;
@@ -419,10 +443,6 @@ function renderizarPost(post, origem) {
     });
 }
 
-// ================================================
-// DELETAR POST
-// ================================================
-
 async function deletarPost(post_id, itemEl) {
     if (!confirm("Excluir esta transmissão?")) return;
 
@@ -439,7 +459,6 @@ async function deletarPost(post_id, itemEl) {
             itemEl.style.transform  = "scale(0.97)";
             setTimeout(() => {
                 itemEl.remove();
-                // Atualiza contador de posts somente na aba de posts
                 if (abaAtiva === "posts") {
                     const total = listaPosts.querySelectorAll(".post").length;
                     setContador("contagem-posts", total);
@@ -448,10 +467,6 @@ async function deletarPost(post_id, itemEl) {
         }
     } catch (erro) { console.error("Erro ao deletar:", erro); }
 }
-
-// ================================================
-// CURTIR
-// ================================================
 
 async function toggleLike(e) {
     if (!usuarioLogado) return;
@@ -468,9 +483,7 @@ async function toggleLike(e) {
             body:    JSON.stringify({ post_id, usuario_id: usuarioLogado.id })
         });
 
-        if (!res.ok) {
-            throw new Error('Falha ao atualizar like');
-        }
+        if (!res.ok) throw new Error('Falha ao atualizar like');
 
         const { total } = await res.json();
         if (span) span.textContent = total;
@@ -480,7 +493,6 @@ async function toggleLike(e) {
             if (icon) {
                 icon.className = "fa-regular fa-heart";
                 icon.style.setProperty("color", "", "important");
-                icon.style.setProperty("fill", "", "important");
             }
             if (span) span.style.setProperty("color", "", "important");
         } else {
@@ -488,18 +500,11 @@ async function toggleLike(e) {
             if (icon) {
                 icon.className = "fa-solid fa-heart";
                 icon.style.setProperty("color", "#fa709a", "important");
-                icon.style.setProperty("fill", "#fa709a", "important");
             }
             if (span) span.style.setProperty("color", "#fa709a", "important");
         }
-    } catch (erro) {
-        console.error(erro);
-    }
+    } catch (erro) { console.error(erro); }
 }
-
-// ================================================
-// COMENTÁRIOS
-// ================================================
 
 async function toggleComentarios(e) {
     const btn      = e.currentTarget;
@@ -548,12 +553,19 @@ async function carregarComentariosCard(post_id, secao) {
             const item = document.createElement("li");
             item.classList.add("comentario-item");
             item.innerHTML = `
-                <div class="comentario-avatar-mini" style="${avatarStyle}">${avatarIcon}</div>
+                <div class="comentario-avatar-mini link-perfil" data-uid="${c.usuario_id}" style="${avatarStyle}">${avatarIcon}</div>
                 <div class="comentario-corpo">
-                    <span class="comentario-usuario">${username}</span>
+                    <span class="comentario-usuario link-perfil" data-uid="${c.usuario_id}" style="cursor:pointer;">${username}</span>
                     <span class="comentario-texto">${c.conteudo}</span>
                 </div>
             `;
+
+            item.querySelectorAll(".link-perfil").forEach(el => {
+                el.addEventListener("click", () => {
+                    window.location.href = `perfil.html?id=${el.dataset.uid}`;
+                });
+            });
+
             lista.appendChild(item);
         });
     } catch (erro) { console.error(erro); }
@@ -597,10 +609,6 @@ async function enviarComentario(post_id, input, postCard) {
     } catch (erro) { console.error(erro); }
 }
 
-// ================================================
-// REPOST
-// ================================================
-
 async function toggleRepost(e) {
     if (!usuarioLogado) return;
     const btn        = e.currentTarget;
@@ -616,38 +624,22 @@ async function toggleRepost(e) {
             body:    JSON.stringify({ post_id, usuario_id: usuarioLogado.id })
         });
 
-        if (!resposta.ok) {
-            throw new Error('Falha ao atualizar repost');
-        }
+        if (!resposta.ok) throw new Error('Falha ao atualizar repost');
 
         const { total } = await resposta.json();
         if (span) span.textContent = total;
 
         if (jaRepostou) {
             btn.classList.remove("repostado");
-            if (icon) {
-                icon.className = "fa-solid fa-retweet";
-                icon.style.setProperty("color", "", "important");
-                icon.style.setProperty("fill", "", "important");
-            }
+            if (icon) icon.style.setProperty("color", "", "important");
             if (span) span.style.setProperty("color", "", "important");
         } else {
             btn.classList.add("repostado");
-            if (icon) {
-                icon.className = "fa-solid fa-retweet";
-                icon.style.setProperty("color", "var(--neon-ciano)", "important");
-                icon.style.setProperty("fill", "var(--neon-ciano)", "important");
-            }
+            if (icon) icon.style.setProperty("color", "var(--neon-ciano)", "important");
             if (span) span.style.setProperty("color", "var(--neon-ciano)", "important");
         }
-    } catch (erro) {
-        console.error(erro);
-    }
+    } catch (erro) { console.error(erro); }
 }
-
-// ================================================
-// SEGUIR / MENSAGEM / FOTO
-// ================================================
 
 btnSeguir.addEventListener("click", async () => {
     if (!usuarioLogado) return;

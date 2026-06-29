@@ -1,14 +1,8 @@
-// ================================================
-// ZERION — feed_sidebar.js
-// usuarioLogado vem do javascript.js — não redeclarar
-// ================================================
-
 async function carregarSugestoesSidebar() {
     const container  = document.getElementById("sugestoes-sidebar");
     if (!container) return;
     if (window.innerWidth < 1024) return;
 
-    // lê direto do localStorage sem redeclarar a variável global
     const user = JSON.parse(localStorage.getItem("usuario"));
 
     try {
@@ -17,6 +11,7 @@ async function carregarSugestoesSidebar() {
 
         const sugestoes = usuarios
             .filter(u => !user || String(u.id) !== String(user.id))
+            .sort(() => Math.random() - 0.5)
             .slice(0, 5);
 
         container.innerHTML = "";

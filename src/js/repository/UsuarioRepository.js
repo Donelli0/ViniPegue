@@ -1,11 +1,5 @@
-// ================================================
-// ZERION — UsuarioRepository.js
-// Repositório de banco de dados para usuario.
-// ================================================
-
 const db = require('../../db/connection');
 
-// Classe que gerencia usuario repository
 
 class UsuarioRepository {
 
@@ -20,14 +14,13 @@ class UsuarioRepository {
     }
 
     buscarPorUsername(termo) {
-    // remove o @ se o usuário digitar, para buscar do jeito certo
     const termoLimpo = termo.replace('@', '');
-    const sql = 'SELECT id, nome, username, foto_perfil FROM usuarios WHERE username LIKE ?';
+    const sql = 'SELECT id, nome, username, foto_perfil, verificado, is_ia FROM usuarios WHERE username LIKE ?';
     return db.promise().query(sql, [`%${termoLimpo}%`]);
 }
 
     buscarPorId(id) {
-        const sql = 'SELECT id, nome, username, foto_perfil, criado_em FROM usuarios WHERE id = ?';
+        const sql = 'SELECT id, nome, username, foto_perfil, criado_em, verificado, is_ia FROM usuarios WHERE id = ?';
         return db.promise().query(sql, [id]);
     }
 
